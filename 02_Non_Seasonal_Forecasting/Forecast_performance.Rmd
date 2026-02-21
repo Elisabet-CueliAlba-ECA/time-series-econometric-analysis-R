@@ -1,0 +1,136 @@
+---
+title: "Forecasting Performance"
+author: "Elisabet Cueli Alba"
+date: "2025-11-24"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+In this example, we compare the forecasting performance of all the non-seasonal methods. 
+$\,$
+
+The data livestock {fpp2} spans the period 1961—2007. 
+
+$\,$
+We withhold the period 2001—2005 as a test set, and use the data from 1970 up to and including year 2000 for the training set.
+```{r}
+library(fpp2)
+library(forecast)
+data(livestock)
+livestock
+```
+```{r}
+
+```
+
+**1. Subset of data starting at 1970 and ending at 2000**
+
+We extract the subset for the training (1970-2000) and test (2001-2005) sets.
+
+```{r}
+train <- window(livestock, start = 1970, end = 2000)
+test <- window(livestock, start = 2001, end = 2005)
+```
+**2. Estimation by ses {forecast}, accuracy {forecast} in the training and test sample, and level plot**
+
+```{r}
+#Simple exponential smoothing
+train_ses <- ses(train,initial="simple", h = 5) #estimated alpha #h=5 (2005-200=5)
+
+#Accuracy on training and test sets
+accuracy(train_ses, test)
+
+```
+```{r}
+plot(train_ses)
+lines(test,col="red")
+```
+*Interpretation*
+
+Comparing the SeS forecast, the blue line, with the Test sample, the red line, we clearly see the difference: test sample has a slight downward movement, and then a rapid positive increase, nothing alike the forecast, which is constant.
+
+$\,$
+
+**3. Estimation by holt {forecast}, accuracy {forecast} in the training and test sample, and level and slope plot**
+
+```{r}
+train_holt <- holt(train)
+names(train_holt)
+```
+```{r}
+plot(train_holt$model)
+```
+```{r}
+accuracy(train_holt, test)
+```
+```{r}
+plot(train_holt)
+lines(test, col = "red")
+```
+*Interpretation*
+
+Comparing the Simple Holt forecast, the blue line, with the Test sample, the red line, we observe a slight difference, smaller than with SeS forecast. Now, the forecast, is not constant, but upwarded, with increasing tendency matching the test's, but with different slope. At year 2004-2005, the difference between test sample and Holt forecast seems the smallest.
+
+$\,$
+
+**4. Estimation by holt (damped=TRUE) {forecast}, accuracy {forecast} in the training and test sample, and level and slope plot**
+
+$ETS (A, A_d, N)$, equivalent to ARIMA(1,1,2)
+```{r}
+train_holt_damped <- holt(train, damped = TRUE)
+plot(train_holt_damped$model)
+```
+```{r}
+accuracy(train_holt_damped,test)
+```
+```{r}
+plot(train_holt_damped)
+lines(test, col = "red")
+```
+*Interpretation*
+
+Comparing the Damped Holt forecast, the blue line, with the Test sample, the red line, we can see a slight difference with Simple Holt forecast. Now, at year 2004-2005, the difference between test sample and Damped Holt forecast seems bigger than with Simple Holt horecast, which suggest the forecast for that period has been damped too much.
+
+$\,$
+
+**5. Estimation by holt (exponential=TRUE, damped=TRUE) {forecast}, accuracy {forecast} in the training and test sample, and level and slope plot**
+```{r}
+train_holt_damped_exp <- holt(train, damped = TRUE, exponential=TRUE)
+plot(train_holt_damped_exp$model)
+```
+```{r}
+accuracy(train_holt_damped_exp,test)
+```
+```{r}
+plot(train_holt_damped_exp)
+lines(test, col = "red")
+```
+*Interpretation*
+
+Comparing the Damped Holt forecast with exponential trend, the blue line, with the Test sample, the red line, we can observe it is more alike to the Simple Holt forecast for this data.
+
+$\,$
+
+**6. Plot of the data and the forecasts of all the methods**
+```{r}
+par(mfrow=c(2,2))
+
+plot(train_ses, xaxt="n", xlab="", yaxt="n", ylab="", main="SeS")
+lines(livestock,col="black")
+
+plot(train_holt, xaxt="n", xlab="", yaxt="n", ylab="", main="Holt")
+lines(livestock,col="black")
+
+plot(train_holt_damped, xaxt="n", xlab="", yaxt="n", ylab="", main="Damped Holt")
+lines(livestock,col="black")
+
+plot(train_holt_damped_exp, xaxt="n", xlab="", yaxt="n", ylab="", 
+     main="Exponential Damped Holt")
+lines(livestock,col="black")
+
+```
+*Interpretation*
+
+Comparing all forecast methods, we could say Exponential Damped Holt or Simple Holt are the best fitted methods for the real data in this case, even though we should check for fitness in a larger horizon of time, as we do not have actual data from 2007 on. However, none of the methods are accurate for the first years of the forecast, as the actual data experimented a slightly decrease in 2001-2002 approximately.

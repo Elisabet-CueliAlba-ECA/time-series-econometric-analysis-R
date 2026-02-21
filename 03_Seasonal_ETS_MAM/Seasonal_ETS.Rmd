@@ -1,0 +1,85 @@
+---
+title: "Seasonal ETS"
+author: "Elisabet Cueli Alba"
+date: "2025-11-28"
+output: pdf_document
+---
+
+```{r}
+library(fpp2)
+library(forecast)
+data(austourists)
+```
+**1. Estimate austourists using ets()**
+
+```{r}
+austourists_ets <- ets(austourists)
+summary(austourists_ets)
+```
+**2. Plot in one screen the data together with the level, slope, and seasonal components**
+
+```{r}
+par(mfrow = c(4, 1), mar = c(3, 4, 2, 1))
+
+plot(austourists, main = "Original Data")
+
+plot(austourists_ets$states[, "l"], main = "Level")
+plot(austourists_ets$states[, "b"], main = "Slope")
+plot(austourists_ets$states[, "s1"], main = "Seasonal")
+
+par(mfrow = c(1, 1))
+```
+
+**3. Plot one-to-eight-ahead forecasts**
+```{r}
+austourists_ets_forecast8 <- forecast(austourists_ets,h=8)
+plot(austourists_ets_forecast8,main="Forecast one-to-eight ahead")
+```
+**4. Use hw {forecast} to estimate austourists {fpp2}, starting at 2010, with additive and multiplicative seasonality**
+
+*Additive*
+```{r}
+hw_additive <- hw(window(austourists, start=2010), seasonal = "additive", h = 8)
+summary(hw_additive)
+```
+*Multiplicative*
+```{r}
+hw_multiplicative <- hw(window(austourists, start=2010), seasonal = "multiplicative", h = 8)
+summary(hw_multiplicative)
+```
+**5. Plot in one screen the data together with the within-sample and out-of-sample one-step-ahead forecasts of the additive and multiplicative models**
+```{r}
+plot(austourists, main = "Additive and Multiplicative Forecasts", type="o", 
+     xlim = c(2010, 2018), ylim = c(20, 70))
+
+lines(window(austourists, start=2010), col = "black")
+
+lines(fitted(hw_additive), col = "blue", lwd = 2)
+lines(fitted(hw_multiplicative), col = "red")
+
+lines(hw_additive$mean, col = "purple")
+lines(hw_multiplicative$mean, col = "pink")
+
+# Add legend
+legend("bottomright", 
+       legend = c("Data", "Additive Fitted", "Multiplicative Fitted", 
+                  "Additive Forecast", "Multiplicative Forecast"),
+       col = c("black", "blue", "red", "purple", "pink"),
+       lty = c(1, 1, 1, 2, 2),
+       lwd = 2, cex = 0.8)
+```
+**6. Plot in one screen the level, slope, and seasonal components of the additive and multiplicative models**
+```{r}
+par(mfrow = c(3, 2))
+
+plot(hw_additive$model$states[, "l"], main = "Level of Additive", ylab="")
+plot(hw_multiplicative$model$states[, "l"], main = "Level of Multiplicative", ylab="")
+
+plot(hw_additive$model$states[, "b"], main = "Slope of Additive", ylab="")
+plot(hw_multiplicative$model$states[, "b"], main = "Slope of Multiplicative", ylab="")
+
+plot(hw_additive$model$states[, "s1"], main = "Seasonal of Additive", ylab="")
+plot(hw_multiplicative$model$states[, "s1"], main = "Seasonal of Multiplicative", ylab="")
+par(mfrow = c(1, 1))
+```
+

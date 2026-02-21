@@ -1,0 +1,62 @@
+---
+title: "MAM"
+author: "Elisabet Cueli Alba"
+date: "2025-12-02"
+output: pdf_document
+---
+
+```{r}
+library(fpp2)
+library(forecast)
+data(ausbeer)
+ausbeer
+```
+**1. Use ets {forecast} to estimate ausbeer {fpp2}**
+```{r}
+ausbeer_ets <- ets(ausbeer)
+ausbeer_ets
+```
+**2. Use ets (model = "AAA") {forecast} to estimate ausbeer {fpp2}**
+```{r}
+ausbeer_ets_aaa <- ets(model="AAA", ausbeer)
+ausbeer_ets_aaa
+```
+**3. Compare the accuracy {forecast} of both models in-sample**
+```{r}
+rbind(accuracy(ausbeer_ets), accuracy (ausbeer_ets_aaa))
+```
+**4. Plot the 1-to-20-step-ahead forecasts for the first model**
+```{r}
+forecast_ets <- forecast(ausbeer_ets, h = 20)
+plot(forecast_ets, main = "1-to-20-Step-Ahead Forecasts")
+```
+**5. Cross Validation (CV): Use an increasing rolling training set, starting with the first 180 observations, to fit the first model, and make one-step-ahead forecasts. Find the one-step-ahead forecast errors**
+```{r}
+n <- length(ausbeer)#total number of observation
+m <- 4 #always 4 quarters
+
+H <- n - 180 #number of periods to forecast
+forecast_errors <- numeric(H) #vector for forecast errors
+
+for (i in 1:H) { #loop for each h in H
+  train <- window(ausbeer, end = time(ausbeer)[180+i-m])
+  forecast_cv <- forecast(ets(train), h = m) #forecast of the next quarter
+  forecast_errors[i] <- ausbeer[180 + i] - forecast_cv$mean[m] #we match the quarters
+}
+```
+**6. Plot in one screen the one-step-ahead forecast errors and the squared one-step-ahead forecast errors**
+```{r}
+par(mfrow = c(2, 1), mar = c(4, 4, 2, 1))
+
+plot(forecast_errors, type = "l", main = "One-Step-Ahead Forecast Errors")
+
+plot(forecast_errors^2, type = "l", main = "Squared One-Step-Ahead Forecast Errors")
+
+par(mfrow = c(1, 1))
+```
+**7. Find the one-step-ahead out-of-sample RMSFE**
+```{r}
+rmsfe <- sqrt(mean(forecast_errors^2))
+print(paste("One-Step-Ahead Out-of-Sample RMSFE:", round(rmsfe, 2)))
+```
+
